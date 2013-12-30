@@ -134,6 +134,11 @@ I am currently using the Java HTTP API.\n", reply.fragments[0].to_s
     assert_equal "Here is another email", EmailReplyParser.parse_reply(body)
   end
 
+  def test_parse_out_sent_from_Samsung_es_es
+    body = IO.read EMAIL_FIXTURE_PATH.join("email_Samsung_es_es.txt").to_s
+    assert_equal "Here is another email", EmailReplyParser.parse_reply(body)
+  end
+
   def test_parse_out_send_from_multiword_mobile_device
     body = IO.read EMAIL_FIXTURE_PATH.join("email_multi_word_sent_from_my_mobile_device.txt").to_s
     assert_equal "Here is another email", EmailReplyParser.parse_reply(body)
