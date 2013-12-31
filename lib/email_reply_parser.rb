@@ -103,7 +103,7 @@ class EmailReplyParser
 
       # Use the StringScanner to pull out each line of the email content.
       @scanner = StringScanner.new(text)
-      while line = @scanner.scan_until(/\n/n)
+      while line = @scanner.scan_until(/\n/)
         scan_line(line)
       end
 
@@ -125,14 +125,16 @@ class EmailReplyParser
     end
 
   private
-    EMPTY = "".freeze    
-    SIGNATURE = '(?m)(--|__|\w-$)|(^(\w+\s*){1,3} ym morf tneS$)|(^(\w+\s*){1,3} edsed odaivnE$)'
+    EMPTY = "".freeze   
+    SENT_FROM = ['Sent from my', "Enviado desde"] 
+    QUOTE = ["On\s.+wrote:", "El\s.+escribió:"]
+    SIGNATURE = '(?m)(--|__|\w-$)|' + SENT_FROM.map{|s| '(^(\w+\s*){1,3} '+s.reverse+'$)'}.join('|')
 
     begin
       require 're2'
-      SIG_REGEX = RE2::Regexp.new(SIGNATURE)
+      SIG_REGEX = RE2::Regexp.new(SIGNATURE)      
     rescue LoadError
-      SIG_REGEX = Regexp.new(SIGNATURE)
+      SIG_REGEX = Regexp.new(SIGNATURE)      
     end
 
     # normalize text so it is easier to parse
@@ -143,14 +145,16 @@ class EmailReplyParser
     #
     def normalize_text(text)
       # in 1.9 we want to operate on the raw bytes
-      text = text.dup.force_encoding("binary") if text.respond_to?(:force_encoding)
+      #text = text.dup.force_encoding("UTF-8") if text.respond_to?(:force_encoding)
 
       # Normalize line endings.
       text.gsub!("\r\n", "\n")
 
       # Check for multi-line reply headers. Some clients break up
       # the "On DATE, NAME <EMAIL> wrote:" line into multiple lines.
-      if match = text.match(/^(On\s(.+)wrote:)$/m)
+      if match = text.match(Regexp.new('^('+QUOTE.join('|')+')$', Regexp::MULTILINE))
+        
+        #standard_header_regexp = reverse_regexp("On\s.+wrote:$")
         # Remove all new lines from the reply header. as long as we don't have any double newline
         # if we do they we have grabbed something that is not actually a reply header
         text.gsub! match[1], match[1].gsub("\n", " ") unless match[1] =~ /\n\n/
@@ -229,7 +233,7 @@ class EmailReplyParser
 
       # We're looking for leading `>`'s to see if this line is part of a
       # quoted Fragment.
-      is_quoted = !!(line =~ /(>+)$/n)
+      is_quoted = !!(line =~ /(>+)$/)
 
       # Mark the current Fragment as a signature if the current line is empty
       # and the Fragment starts with a common signature indicator.
@@ -268,7 +272,7 @@ class EmailReplyParser
     #
     # Returns true if the line is a valid header, or false.
     def quote_header?(line)
-      standard_header_regexp = reverse_regexp("On\s.+wrote:$")
+      standard_header_regexp = reverse_regexp(QUOTE.join('|') + "$")      
       line =~ standard_header_regexp
     end
 
@@ -339,10 +343,11 @@ class EmailReplyParser
 
       regexp_options = []
       regexp_options << Regexp::IGNORECASE if ignore_case
+      
       Regexp.new(regexp_text, *regexp_options)
     end
 
-    # reverses parentheses in a string
+    # reverses parentheses and curly braces in a string
     #
     # text - String or Regexp that you want to reverse
     #
@@ -350,6 +355,8 @@ class EmailReplyParser
     def reverse_parentheses(text)
       text.gsub!(/\)(.*)\(/m, '(\1)')  # reverses outter parentheses
       text.gsub!(/\)(.*?)\(/m, '(\1)') # reverses nested parentheses
+      text.gsub!(/\}(.*)\{/m, '{\1}')  # reverses outter curly braces
+      text.gsub!(/\}(.*?)\{/m, '{\1}') # reverses nested curly braces
       text
     end
 
