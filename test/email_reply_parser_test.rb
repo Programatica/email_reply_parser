@@ -61,6 +61,20 @@ I am currently using the Java HTTP API.\n", reply.fragments[0].to_s
     assert_match /^_/, reply.fragments[3].to_s
   end
 
+  def test_reads_top_post_spanish_with_only_quote_header
+    reply = email(:email_1_9)
+    assert_equal 2, reply.fragments.size
+
+    assert_equal [false, true],
+      reply.fragments.map { |f| f.quoted? }
+    assert_equal [false, true],
+      reply.fragments.map { |f| f.hidden? }
+    
+
+    assert_match /^Currar en equipo que es lo mas bonito/, reply.fragments[0].to_s    
+    assert_match /^El [^\:]+\:/, reply.fragments[1].to_s    
+  end
+
   def test_reads_bottom_post
     reply = email(:email_1_2)
     assert_equal 6, reply.fragments.size
