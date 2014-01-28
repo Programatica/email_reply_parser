@@ -77,7 +77,7 @@ I am currently using the Java HTTP API.\n", reply.fragments[0].to_s
 
   def test_detect_date_and_email_quote_header
     reply = email(:email_2_3)
-    
+
     assert_equal 2, reply.fragments.size
 
     assert_equal [false, true],
@@ -367,8 +367,7 @@ This line would have been considered part of the header line."
   end
 
 if !ENV["SKIP_RE2_TEST"]
-  def test_pathological_emails
-    return false
+  def test_pathological_emails    
     t0 = Time.now
     reply = email("pathological")
     assert (Time.now - t0) < 1, "Took too long, upgrade to re2 gem."
