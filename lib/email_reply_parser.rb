@@ -127,7 +127,13 @@ class EmailReplyParser
   private
     EMPTY = "".freeze   
     SENT_FROM = ['Sent from my', "Enviado desde"] 
-    QUOTE = ["On\s.+wrote:", "El\s.+escribió:"]
+    QUOTE = ["On\s.+wrote:", "El\s.+escribió:", '\d+-\d+-\d+\s+<.*@.*>']
+
+      
+    #REPLY_HEADER_MAIL_AND_DATE = '(>).*?(@).*?(<)(\\s+)(\\d+)(-)(\\d+)(-)(\\d+)'
+
+
+
     SIGNATURE = '(?m)(--|__|\w-$)|' + SENT_FROM.map{|s| '(^(\w+\s*){1,3} '+s.reverse+'$)'}.join('|')
 
     begin
@@ -338,6 +344,8 @@ class EmailReplyParser
       regexp_text = regexp.to_s.reverse
       regexp_text.gsub!("*.", ".*")
       regexp_text.gsub!("+.", ".+")
+      regexp_text.gsub!("+s\\", "\\s+")
+      regexp_text.gsub!("+d\\", "\\d+")
       regexp_text.gsub!("$", "^")
       regexp_text = reverse_parentheses(regexp_text)
 
