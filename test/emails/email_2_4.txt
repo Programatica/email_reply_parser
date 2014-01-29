@@ -1,0 +1,4 @@
+Arreglado parser de replies para el nuevo formato que parece usar gmail
+
+
+2014-01-27 Tomás Arribas <tomas@dutyful.com>

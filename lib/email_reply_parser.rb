@@ -127,7 +127,7 @@ class EmailReplyParser
   private
     EMPTY = "".freeze   
     SENT_FROM = ['Sent from my', "Enviado desde"] 
-    QUOTE = ["On\s.+wrote:", "El\s.+escribió:", '\d+-\d+-\d+\s+<.*@.*>']
+    QUOTE = ["On\s.+wrote:", "El\s.+escribió:", '\d+-\d+-\d+\s+.*<.*@.*>']
 
       
     #REPLY_HEADER_MAIL_AND_DATE = '(>).*?(@).*?(<)(\\s+)(\\d+)(-)(\\d+)(-)(\\d+)'
