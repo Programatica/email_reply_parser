@@ -38,8 +38,8 @@ class EmailReplyParser
   # from_address - A String From address of the email (optional)
   #
   # Returns an Email instance.
-  def self.read(text, from_address = nil)
-    Email.new.read(text, from_address)
+  def self.read(text, from_address = nil, html = false)
+    Email.new.read(text, from_address, html)
   end
 
   # Public: Get the text of the visible portions of the given email body.
@@ -48,10 +48,10 @@ class EmailReplyParser
   # from_address - A String From address of the email (optional)
   #
   # Returns a String.
-  def self.parse_reply(text, from_address = nil)
-    self.read(text, from_address).visible_text
+  def self.parse_reply(text, from_address = nil, html = false)
+    self.read(text, from_address, html).visible_text
   end
-
+  
   ### Emails
 
   # An Email instance represents a parsed body String.
@@ -67,7 +67,9 @@ class EmailReplyParser
     #
     # Returns a String.
     def visible_text
-      fragments.select{|f| !f.hidden?}.map{|f| f.to_s}.join("\n").rstrip
+      text = fragments.select{|f| !f.hidden?}.map{|f| f.to_s}.join("\n").rstrip
+      text = Iconv.conv("UTF8", "LATIN1", CGI.unescapeHTML(text)) if @html && !text.respond_to?(:force_encoding) # needed for ruby 1.8
+      text
     end
 
     # Splits the given text into a list of Fragments.  This is roughly done by
@@ -78,8 +80,12 @@ class EmailReplyParser
     # from_address - A String From address of the email (optional)
     #
     # Returns this same Email instance.
-    def read(text, from_address = nil)
+    def read(text, from_address = nil, html = false)
       from_address ||= ""
+      @html = html
+      if @html
+        text = HTML::FullSanitizer.new.sanitize(text.gsub("</p>","</p>\n").gsub("<br","\n<br"))
+      end
 
       # parse out the from name if one exists and save for use later
       @from_name_raw = parse_raw_name_from_address(from_address)
@@ -90,7 +96,7 @@ class EmailReplyParser
 
       # The text is reversed initially due to the way we check for hidden
       # fragments.
-      text = text.reverse
+      text = (text.respond_to?(:mb_chars) ? text.mb_chars : text).reverse
 
       # This determines if any 'visible' Fragment has been found.  Once any
       # visible Fragment is found, stop looking for hidden ones.
@@ -240,6 +246,7 @@ class EmailReplyParser
       # We're looking for leading `>`'s and quote headers to see if this line is part of a
       # quoted Fragment.
       is_quoted = !!(line =~ /(>+)$/) || !!quote_header?(line)
+      @fragment.quoted = true if @html && quote_header?(line)
 
       # Mark the current Fragment as a signature if the current line is empty
       # and the Fragment starts with a common signature indicator.
@@ -295,7 +302,7 @@ class EmailReplyParser
       to_labels = ["To", "Para"]
       date_labels = ["Date", "Sent", "Envíado el"]
       subject_labels = ["Subject", "Asunto"]
-      reply_to_labels = ["Reply-To"]
+      reply_to_labels = ["Reply-To", "Responder a"]
 
       quoted_header_regexp =
         multiline_quoted_header_regexps(
@@ -342,7 +349,7 @@ class EmailReplyParser
     #
     # Returns Regexp
     def reverse_regexp(regexp, ignore_case = true)
-      regexp_text = regexp.to_s.reverse
+      regexp_text = (regexp.to_s.respond_to?(:mb_chars) ? regexp.to_s.mb_chars : regexp.to_s).reverse
       regexp_text.gsub!("*.", ".*")
       regexp_text.gsub!("+.", ".+")
       regexp_text.gsub!("+s\\", "\\s+")
@@ -468,7 +475,7 @@ class EmailReplyParser
     def finish
       @content = @lines.join("\n")
       @lines = nil
-      @content.reverse!
+      @content.respond_to?(:mb_chars) ? (@content = @content.mb_chars.reverse) : @content.reverse!
     end
 
     def to_s
