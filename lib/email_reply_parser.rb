@@ -161,6 +161,7 @@ class EmailReplyParser
       text.gsub!('&lt;', '<')
       text.gsub!('&gt;', '>')
       text.gsub!('&nbsp;', ' ')
+      text
     end
 
     # normalize text so it is easier to parse
