@@ -67,9 +67,7 @@ class EmailReplyParser
     #
     # Returns a String.
     def visible_text
-      text = fragments.select{|f| !f.hidden?}.map{|f| f.to_s}.join("\n").rstrip
-      text = Iconv.conv("UTF8", "LATIN1", CGI.unescapeHTML(text)) if @html && !text.respond_to?(:force_encoding) # needed for ruby 1.8
-      text
+      fragments.select{|f| !f.hidden?}.map{|f| f.to_s}.join("\n").rstrip
     end
 
     # Splits the given text into a list of Fragments.  This is roughly done by
@@ -83,9 +81,7 @@ class EmailReplyParser
     def read(text, from_address = nil, html = false)
       from_address ||= ""
       @html = html
-      if @html
-        text = HTML::FullSanitizer.new.sanitize(text.gsub("</p>","</p>\n").gsub("<br","\n<br"))
-      end
+      text = strip_html(text) if @html
 
       # parse out the from name if one exists and save for use later
       @from_name_raw = parse_raw_name_from_address(from_address)
@@ -147,6 +143,24 @@ class EmailReplyParser
       SIG_REGEX = RE2::Regexp.new(SIGNATURE)      
     rescue LoadError
       SIG_REGEX = Regexp.new(SIGNATURE)      
+    end
+    
+    # strip html so we can parse as text
+    #
+    # text - String text to strip html
+    #
+    # Returns a String
+    #
+    def strip_html(text)
+      text.gsub!(/^\s*<!DOCTYPE [^>]*>/, '')
+      text.gsub!(/<head>.*<\/head>/m, '')
+      text.gsub!(/\r?\n/, '')
+      text.gsub!("</p>","</p>\n")
+      text.gsub!("<br","\n<br")
+      text = HTML::FullSanitizer.new.sanitize(text)
+      text.gsub!('&lt;', '<')
+      text.gsub!('&gt;', '>')
+      text.gsub!('&nbsp;', ' ')
     end
 
     # normalize text so it is easier to parse
