@@ -293,8 +293,8 @@ class EmailReplyParser
 
       from_labels = ["From", "De"]
       to_labels = ["To", "Para"]
-      date_labels = ["Date", "Sent", "Enviada em"]
-      subject_labels = ["Subject", "Assunto"]
+      date_labels = ["Date", "Sent", "Envíado el"]
+      subject_labels = ["Subject", "Asunto"]
       reply_to_labels = ["Reply-To"]
 
       quoted_header_regexp =
@@ -320,6 +320,7 @@ class EmailReplyParser
       quoted_header_regexps <<  "#{labels[:date]}:.*\n#{labels[:from]}:.*\n#{labels[:to]}:.*\n#{labels[:subject]}:.*"
       quoted_header_regexps << "#{labels[:from]}:.*\n#{labels[:date]}:.*\n#{labels[:to]}:.*\n#{labels[:subject]}:.*"
       quoted_header_regexps << "#{labels[:from]}:.*\n#{labels[:to]}:.*\n#{labels[:date]}:.*\n#{labels[:subject]}:.*"
+      quoted_header_regexps << "#{labels[:from]}:.*\n#{labels[:to]}:.*\n#{labels[:subject]}:.*\n#{labels[:dateas]}:.*"
       quoted_header_regexps << "#{labels[:from]}:.*\n#{labels[:reply_to]}:.*\n#{labels[:date]}:.*\n#{labels[:to]}:.*\n#{labels[:subject]}:.*"
 
       reverse_regexp("(#{quoted_header_regexps.join("|")})")
