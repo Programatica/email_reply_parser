@@ -463,7 +463,10 @@ class EmailReplyParser
   # Represents a group of paragraphs in the email sharing common attributes.
   # Paragraphs should get their own fragment if they are a quoted area or a
   # signature.
-  class Fragment < Struct.new(:quoted, :signature, :hidden)
+  unless defined?(Fragment)
+    class Fragment < Struct.new(:quoted, :signature, :hidden);end
+  end
+  class Fragment
     # This is an Array of String lines of content.  Since the content is
     # reversed, this array is backwards, and contains reversed strings.
     attr_reader :lines,
